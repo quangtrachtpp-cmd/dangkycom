@@ -1,107 +1,113 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>Đăng ký cơm Nhà máy Nhiệt điện Quảng Trạch</title>
-
-<style>
-
-body{
-font-family: Arial;
-text-align:center;
-background:#f2f2f2;
-}
-
-.container{
-width:500px;
-margin:auto;
-background:white;
-padding:30px;
-border-radius:10px;
-box-shadow:0 0 10px #ccc;
-}
-
-button{
-padding:10px 20px;
-background:#c62828;
-color:white;
-border:none;
-border-radius:5px;
-cursor:pointer;
-}
-
-</style>
+    <title>Đăng ký cơm - NĐ Quảng Trạch</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f4f7f6; font-family: 'Segoe UI', sans-serif; }
+        .header-evn { background: #0054a6; color: white; padding: 20px; text-align: center; border-bottom: 5px solid #ee7d00; }
+        .factory-img { width: 100%; max-height: 250px; object-fit: cover; border-radius: 10px; margin-bottom: 20px; }
+        .card { border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        #status-message { display: none; margin-top: 50px; }
+    </style>
 </head>
-
 <body>
 
-<div class="container">
+<div class="header-evn">
+    <h3>NHÀ MÁY NHIỆT ĐIỆN QUẢNG TRẠCH</h3>
+    <p>Hệ thống đăng ký cơm hàng ngày</p>
+</div>
 
-<img src="logo-evn.png" width="120">
+<div class="container mt-4">
+    <img src="https://via.placeholder.com/800x250?text=Hinh+Anh+Nha+May+Quang+Trach" class="factory-img">
 
-<h2>Đăng ký cơm ngày <span id="date"></span></h2>
+    <div id="status-message" class="alert alert-danger text-center">
+        <h4>Hệ thống đã đóng cửa</h4>
+        <p>Vui lòng quay trở lại từ 20:00 tối nay đến 08:00 sáng mai.</p>
+    </div>
 
-<select id="name">
-<option value="">Chọn tên</option>
-<option>Nguyễn Văn A</option>
-<option>Trần Thị B</option>
-</select>
+    <div id="registration-form" class="card p-4">
+        <h4 class="mb-4 text-primary">Đăng ký cho ngày: <span id="current-date"></span></h4>
+        
+        <div class="mb-3">
+            <label class="form-label">Họ và tên:</label>
+            <select id="nameSelect" class="form-select" onchange="toggleNewName(this.value)">
+                <option value="">-- Chọn tên của bạn --</option>
+                <option value="other" style="color: blue;">+ Thêm tên mới (Chưa có trong danh sách)</option>
+            </select>
+            <input type="text" id="newNameInput" class="form-control mt-2" placeholder="Nhập họ tên của bạn" style="display:none">
+        </div>
 
-<br><br>
+        <div class="mb-3">
+            <label class="form-label">Đăng ký bữa ăn:</label>
+            <select id="mealSelect" class="form-select">
+                <option value="Trưa">Bữa Trưa</option>
+                <option value="Tối">Bữa Tối</option>
+                <option value="Cả hai">Cả Trưa & Tối</option>
+            </select>
+        </div>
 
-<label><input type="checkbox" value="trua"> Trưa</label>
-<label><input type="checkbox" value="toi"> Tối</label>
-
-<br><br>
-
-<button onclick="register()">Đăng ký</button>
-
-<p id="msg"></p>
-
+        <button onclick="submitForm()" id="btnSubmit" class="btn btn-primary w-100 p-2">GỬI ĐĂNG KÝ</button>
+    </div>
 </div>
 
 <script>
+    const SCRIPT_URL = 'URL_WEB_APP_CỦA_BẠN_Ở_BƯỚC_1';
 
-document.getElementById("date").innerText =
-new Date().toLocaleDateString("vi-VN");
+    // 1. Kiểm tra giờ truy cập
+    function checkTime() {
+        const hour = new Date().getHours();
+        const isOpen = (hour >= 20 || hour < 8);
+        if(!isOpen) {
+            document.getElementById('registration-form').style.display = 'none';
+            document.getElementById('status-message').style.display = 'block';
+        }
+    }
 
-function register(){
+    // 2. Load danh sách tên
+    async function loadNames() {
+        const res = await fetch(SCRIPT_URL);
+        const names = await res.json();
+        const select = document.getElementById("nameSelect");
+        names.forEach(name => {
+            let opt = document.createElement("option");
+            opt.value = name; opt.text = name;
+            select.add(opt, select.options[1]);
+        });
+    }
 
-let name = document.getElementById("name").value;
+    function toggleNewName(val) {
+        document.getElementById("newNameInput").style.display = (val === 'other') ? 'block' : 'none';
+    }
 
-let meal=[];
+    async function submitForm() {
+        const btn = document.getElementById("btnSubmit");
+        const nameSelect = document.getElementById("nameSelect").value;
+        const newName = document.getElementById("newNameInput").value;
+        
+        const payload = {
+            name: nameSelect === 'other' ? newName : nameSelect,
+            isNew: nameSelect === 'other',
+            meal: document.getElementById("mealSelect").value
+        };
 
-document.querySelectorAll("input[type=checkbox]:checked")
-.forEach(e=>meal.push(e.value));
+        if(!payload.name) return alert("Vui lòng chọn hoặc nhập tên!");
 
-fetch("URL_APPS_SCRIPT",{
+        btn.disabled = true; btn.innerHTML = "Đang xử lý...";
+        
+        await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
 
-method:"POST",
+        alert("Đăng ký thành công!");
+        location.reload();
+    }
 
-body:JSON.stringify({
-name:name,
-meal:meal
-})
-
-})
-
-.then(r=>r.json())
-
-.then(data=>{
-
-if(data.status=="exists"){
-document.getElementById("msg").innerText="Bạn đã đăng ký rồi";
-}
-
-if(data.status=="success"){
-document.getElementById("msg").innerText="Đăng ký thành công";
-}
-
-})
-
-}
-
+    document.getElementById('current-date').innerText = new Date(Date.now() + 86400000).toLocaleDateString('vi-VN');
+    checkTime();
+    loadNames();
 </script>
-
 </body>
 </html>
