@@ -1,35 +1,107 @@
 <!DOCTYPE html>
 <html>
-
 <head>
 <meta charset="UTF-8">
-<title>Đăng ký cơm</title>
+<title>Đăng ký cơm Nhà máy Nhiệt điện Quảng Trạch</title>
+
+<style>
+
+body{
+font-family: Arial;
+text-align:center;
+background:#f2f2f2;
+}
+
+.container{
+width:500px;
+margin:auto;
+background:white;
+padding:30px;
+border-radius:10px;
+box-shadow:0 0 10px #ccc;
+}
+
+button{
+padding:10px 20px;
+background:#c62828;
+color:white;
+border:none;
+border-radius:5px;
+cursor:pointer;
+}
+
+</style>
 </head>
 
 <body>
 
-<h1>ĐĂNG KÝ CƠM NGÀY MAI</h1>
+<div class="container">
 
-<p>Chọn tên và bữa ăn:</p>
+<img src="logo-evn.png" width="120">
 
-<label>Tên nhân sự:</label>
+<h2>Đăng ký cơm ngày <span id="date"></span></h2>
 
-<select>
+<select id="name">
+<option value="">Chọn tên</option>
 <option>Nguyễn Văn A</option>
 <option>Trần Thị B</option>
-<option>Lê Văn C</option>
 </select>
 
 <br><br>
 
-<label>Bữa ăn:</label>
-
-<input type="radio" name="meal"> Bữa trưa
-<input type="radio" name="meal"> Bữa tối
+<label><input type="checkbox" value="trua"> Trưa</label>
+<label><input type="checkbox" value="toi"> Tối</label>
 
 <br><br>
 
-<button>Đăng ký</button>
+<button onclick="register()">Đăng ký</button>
+
+<p id="msg"></p>
+
+</div>
+
+<script>
+
+document.getElementById("date").innerText =
+new Date().toLocaleDateString("vi-VN");
+
+function register(){
+
+let name = document.getElementById("name").value;
+
+let meal=[];
+
+document.querySelectorAll("input[type=checkbox]:checked")
+.forEach(e=>meal.push(e.value));
+
+fetch("URL_APPS_SCRIPT",{
+
+method:"POST",
+
+body:JSON.stringify({
+name:name,
+meal:meal
+})
+
+})
+
+.then(r=>r.json())
+
+.then(data=>{
+
+if(data.status=="exists"){
+document.getElementById("msg").innerText="Bạn đã đăng ký rồi";
+}
+
+if(data.status=="success"){
+document.getElementById("msg").innerText="Đăng ký thành công";
+}
+
+})
+
+}
+
+</script>
 
 </body>
 </html>
